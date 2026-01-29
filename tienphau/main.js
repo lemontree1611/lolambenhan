@@ -815,12 +815,11 @@ if (chatInput) {
   const btnShare = document.getElementById("btn-share");
   const formEl = document.getElementById("benhanForm");
 
-  // Disable nút Chia sẻ khi đã vào room (đang chia sẻ)
-  function setShareButtonDisabled(disabled, label) {
+  // Disable nút Chia sẻ khi đã vào room (đang chia sẻ) + hiển thị trạng thái kết nối
+  function setShareButtonDisabled(disabled) {
     if (!btnShare) return;
     btnShare.disabled = !!disabled;
     btnShare.classList.toggle("is-disabled", !!disabled);
-    if (label) btnShare.textContent = label;
     if (disabled) {
       btnShare.setAttribute("aria-disabled", "true");
       btnShare.title = "Đang trong phiên chia sẻ";
@@ -828,6 +827,63 @@ if (chatInput) {
       btnShare.removeAttribute("aria-disabled");
       btnShare.title = "";
     }
+  }
+
+  // Inject CSS cho chấm trạng thái (pulse online)
+  (function injectShareDotCSS() {
+    const id = "share-dot-css";
+    if (document.getElementById(id)) return;
+    const st = document.createElement("style");
+    st.id = id;
+    st.textContent = `
+      .share-dot{display:inline-block; vertical-align:middle; margin-right:6px;}
+      .share-dot.pulse{animation: shareDotPulse 1.2s ease-in-out infinite;}
+      @keyframes shareDotPulse {
+        0% { transform: scale(1); opacity: 1; }
+        70% { transform: scale(1.35); opacity: 0.55; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(st);
+  })();
+
+  function dotSVG(color, pulse = false) {
+    return `
+      <svg class="share-dot ${pulse ? "pulse" : ""}" width="10" height="10" viewBox="0 0 10 10"
+           xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="5" cy="5" r="5" fill="${color}"></circle>
+      </svg>
+    `.trim();
+  }
+
+  function setShareStatus(status, count) {
+    if (!btnShare) return;
+
+    // Khi đã ở room => luôn disable
+    const inRoom = !!state.room;
+
+    if (!inRoom) {
+      // chưa vào room: nút chia sẻ bình thường
+      setShareButtonDisabled(false);
+      btnShare.textContent = "Chia sẻ";
+      return;
+    }
+
+    setShareButtonDisabled(true);
+
+    if (status === "connecting") {
+      btnShare.innerHTML = `${dotSVG("#f59e0b", false)}Connecting…`;
+      return;
+    }
+
+    if (status === "offline") {
+      btnShare.innerHTML = `${dotSVG("#ef4444", false)}Offline`;
+      return;
+    }
+
+    // online
+    const n = (typeof count === "number" && isFinite(count)) ? count : null;
+    btnShare.innerHTML = `${dotSVG("#22c55e", true)}${n !== null ? `X${n} online` : "Online"}`;
   }
 
   const state = {
@@ -890,7 +946,7 @@ if (chatInput) {
         </span>
       </div>
       <div class="share-hint">
-       Copy link phía trên và gửi cho mọi người để làm bệnh án cùng nhau
+        Mở link này ở máy khác (hoặc tab ẩn danh) để cùng nhập liệu realtime. Bấm <b>Xoá hết</b> cũng sẽ đồng bộ.
       </div>
     `, true);
   }
@@ -906,7 +962,7 @@ if (chatInput) {
         </span>
       </div>
       <div class="share-hint">
-        Bạn đang ở phiên bệnh án do người khác chia sẽ, mọi thay đổi sẽ tự động lưu lại.
+        Bạn đang ở phiên chia sẻ. Mọi thay đổi sẽ tự đồng bộ qua lại.
       </div>
     `, true);
   }
@@ -1029,6 +1085,8 @@ if (chatInput) {
     state.ws = null;
     state.connected = false;
     state.room = room;
+    state.onlineCount = null;
+    setShareStatus("connecting");
 
     const ws = new WebSocket(WS_URL);
     state.ws = ws;
@@ -1036,6 +1094,8 @@ if (chatInput) {
     ws.onopen = () => {
       wsSend({ type: "join", room });
       state.connected = true;
+      // vẫn hiển thị Connecting… cho tới khi nhận presence/joined
+      setShareStatus("connecting", state.onlineCount);
 
       // Khi đã vào room thì mới bind events
       bindFormEvents();
@@ -1057,6 +1117,19 @@ if (chatInput) {
       let msg;
       try { msg = JSON.parse(ev.data); } catch { return; }
 
+      if (msg.type === "joined") {
+        // server xác nhận đã vào phòng
+        setShareStatus("online", state.onlineCount);
+        return;
+      }
+
+      if (msg.type === "presence") {
+        // cập nhật số người online trong phòng
+        if (typeof msg.count === "number") state.onlineCount = msg.count;
+        setShareStatus(state.connected ? "online" : "connecting", state.onlineCount);
+        return;
+      }
+
       if (msg.type === "state") {
         applyData(msg.payload || {});
         return;
@@ -1070,6 +1143,7 @@ if (chatInput) {
 
     ws.onclose = () => {
       state.connected = false;
+      if (state.room) setShareStatus("offline", state.onlineCount);
       // không hiện notice khi chưa bấm chia sẻ; còn đang share thì giữ notice nhưng có thể reconnect
       // auto reconnect nhẹ nếu đã có room
       if (state.room) {
@@ -1082,6 +1156,7 @@ if (chatInput) {
     };
 
     ws.onerror = () => {
+      if (state.room) setShareStatus("offline", state.onlineCount);
       // nếu người dùng đã bấm chia sẻ mà lỗi thì báo nhẹ
       if (showNotice) {
         setNotice(`
@@ -1124,9 +1199,9 @@ if (chatInput) {
     // Copy link ngay khi bấm (nếu được)
     try { await navigator.clipboard.writeText(link); } catch (_) {}
 
-    // Đã bắt đầu chia sẻ => khoá nút Chia sẻ
-    setShareButtonDisabled(true, "Đang chia sẻ");
-
+    // Đã bắt đầu chia sẻ => khoá nút Chia sẻ và hiện trạng thái Connecting…
+    state.room = room;
+    setShareStatus("connecting");
 
     connect(room, { showNotice: true });
     window.__SHARE_SYNC__.enabled = true;
@@ -1141,8 +1216,9 @@ if (chatInput) {
   // Auto-connect khi người nhận mở link có ?room=
   const roomFromUrl = getRoomFromURL();
   if (roomFromUrl) {
-    // Nếu mở bằng link có room => đang trong phiên chia sẻ, khoá nút Chia sẻ
-    setShareButtonDisabled(true, "Đang chia sẻ");
+    // Nếu mở bằng link có room => đang trong phiên chia sẻ
+    state.room = roomFromUrl;
+    setShareStatus("connecting");
     connect(roomFromUrl, { showNotice: false });
     window.__SHARE_SYNC__.enabled = true;
     // vẫn cho thấy đang đồng bộ (không hiện hint “nhấn chia sẻ…”)
