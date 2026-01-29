@@ -829,27 +829,9 @@ if (chatInput) {
     }
   }
 
-  // Inject CSS cho chấm trạng thái (pulse online)
-  (function injectShareDotCSS() {
-    const id = "share-dot-css";
-    if (document.getElementById(id)) return;
-    const st = document.createElement("style");
-    st.id = id;
-    st.textContent = `
-      .share-dot{display:inline-block; vertical-align:middle; margin-right:6px;}
-      .share-dot.pulse{animation: shareDotPulse 1.2s ease-in-out infinite;}
-      @keyframes shareDotPulse {
-        0% { transform: scale(1); opacity: 1; }
-        70% { transform: scale(1.35); opacity: 0.55; }
-        100% { transform: scale(1); opacity: 1; }
-      }
-    `;
-    document.head.appendChild(st);
-  })();
-
-  function dotSVG(color, pulse = false) {
+  function dotSVG(color) {
     return `
-      <svg class="share-dot ${pulse ? "pulse" : ""}" width="10" height="10" viewBox="0 0 10 10"
+      <svg style="vertical-align:middle;margin-right:6px;flex-shrink:0;" width="10" height="10" viewBox="0 0 10 10"
            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <circle cx="5" cy="5" r="5" fill="${color}"></circle>
       </svg>
@@ -872,18 +854,18 @@ if (chatInput) {
     setShareButtonDisabled(true);
 
     if (status === "connecting") {
-      btnShare.innerHTML = `${dotSVG("#f59e0b", false)}Connecting…`;
+      btnShare.innerHTML = `${dotSVG("#f59e0b")}Connecting…`;
       return;
     }
 
     if (status === "offline") {
-      btnShare.innerHTML = `${dotSVG("#ef4444", false)}Offline`;
+      btnShare.innerHTML = `${dotSVG("#ef4444")}Offline`;
       return;
     }
 
     // online
     const n = (typeof count === "number" && isFinite(count)) ? count : null;
-    btnShare.innerHTML = `${dotSVG("#22c55e", true)}${n !== null ? `${n} online` : "Online"}`;
+    btnShare.innerHTML = `${dotSVG("#22c55e")}${n !== null ? `${n} online` : "Online"}`;
   }
 
   const state = {
@@ -893,6 +875,7 @@ if (chatInput) {
     applyingRemote: false,
     sendTimer: 0,
     lastSentJson: "",
+    boundEvents: false,
   };
 
   function setNotice(html, show = true) {
@@ -1052,6 +1035,10 @@ if (chatInput) {
 
   function wsSend(obj) {
     if (!state.ws || state.ws.readyState !== 1) return;
+    // gửi kèm room để server dễ route (kể cả khi join/presence có vấn đề)
+    if (state.room && (obj?.type === "state" || obj?.type === "clear")) {
+      obj.room = state.room;
+    }
     state.ws.send(JSON.stringify(obj));
   }
 
@@ -1072,7 +1059,8 @@ if (chatInput) {
 
   function bindFormEvents() {
     if (!formEl) return;
-
+    if (state.boundEvents) return;
+    state.boundEvents = true;
     formEl.addEventListener("input", () => scheduleSendState(false));
     formEl.addEventListener("change", () => scheduleSendState(false));
   }
