@@ -883,7 +883,7 @@ if (chatInput) {
 
     // online
     const n = (typeof count === "number" && isFinite(count)) ? count : null;
-    btnShare.innerHTML = `${dotSVG("#22c55e", true)}${n !== null ? `X${n} online` : "Online"}`;
+    btnShare.innerHTML = `${dotSVG("#22c55e", true)}${n !== null ? `${n} online` : "Online"}`;
   }
 
   const state = {
@@ -946,7 +946,7 @@ if (chatInput) {
         </span>
       </div>
       <div class="share-hint">
-        Mở link này ở máy khác (hoặc tab ẩn danh) để cùng nhập liệu realtime. Bấm <b>Xoá hết</b> cũng sẽ đồng bộ.
+        Gửi cho người khác link phía trên để họ truy cập và làm bệnh án cùng bạn.
       </div>
     `, true);
   }
@@ -955,14 +955,14 @@ if (chatInput) {
     // Khi người nhận mở link có room=... thì chỉ báo kết nối (không hiện “nhấn chia sẻ…”)
     setNotice(`
       <div class="share-row">
-        <span class="share-label" style="color: green !important;">Đang đồng bộ</span>
+        <span class="share-label" style="color: green !important;">Kết nối thành công</span>
         <span class="share-muted">(Room <b>${escapeHtml(room)}</b>)</span>
         <span class="share-actions">
           <button type="button" class="apple-icon-btn" id="share-copy-btn" data-link="${escapeHtml(window.location.href)}">Copy link</button>
         </span>
       </div>
       <div class="share-hint">
-        Bạn đang ở phiên chia sẻ. Mọi thay đổi sẽ tự đồng bộ qua lại.
+        Bạn đang ở phiên bệnh án do người khác chia sẽ, mọi thay đổi sẽ tự đồng lưu lại.
       </div>
     `, true);
   }
