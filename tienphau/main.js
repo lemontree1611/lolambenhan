@@ -962,7 +962,7 @@ if (chatInput) {
         </span>
       </div>
       <div class="share-hint">
-        Bạn đang ở phiên bệnh án do người khác chia sẽ, mọi thay đổi sẽ tự đồng lưu lại.
+        Bạn đang ở phiên bệnh án do người khác chia sẽ, mọi thay đổi sẽ tự động lưu lại.
       </div>
     `, true);
   }
