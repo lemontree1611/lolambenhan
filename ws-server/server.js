@@ -1,21 +1,170 @@
 // ws-server/server.js
-// WebSocket + HTTP API (Gemini)
+// WebSocket + HTTP API (Gemini) + Comments API (Postgres)
 // Chạy tốt trên Render
 
 const http = require("http");
 const WebSocket = require("ws");
 const express = require("express");
 const cors = require("cors");
+const crypto = require("crypto");
+const { Pool } = require("pg");
 
 const PORT = process.env.PORT || 10000;
 
 // ================== EXPRESS (HTTP API) ==================
 const app = express();
-app.use(cors());
+
+// ====== CORS ======
+// Nếu muốn chặt hơn: set CORS_ORIGINS="https://xxx.github.io,https://domain.com"
+const corsOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: function (origin, cb) {
+      // allow curl/no-origin
+      if (!origin) return cb(null, true);
+      if (corsOrigins.length === 0) return cb(null, true); // mở nếu chưa cấu hình
+      return corsOrigins.includes(origin)
+        ? cb(null, true)
+        : cb(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
+
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/", (req, res) => {
   res.send("WS + Gemini API server is running.");
+});
+
+app.get("/healthz", (req, res) => res.send("ok"));
+
+// ================== POSTGRES (COMMENTS) ==================
+const DATABASE_URL = process.env.DATABASE_URL || "";
+let pool = null;
+
+if (DATABASE_URL) {
+  pool = new Pool({ connectionString: DATABASE_URL });
+} else {
+  console.warn("Missing DATABASE_URL - comments APIs will not work until set.");
+}
+
+// ====== ADMIN (simple token) ======
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || "";
+
+function makeToken() {
+  const raw = crypto.randomBytes(24).toString("hex");
+  const sig = crypto.createHmac("sha256", ADMIN_TOKEN_SECRET).update(raw).digest("hex");
+  return `${raw}.${sig}`;
+}
+
+function verifyToken(token) {
+  if (!token || !ADMIN_TOKEN_SECRET) return false;
+  const parts = token.split(".");
+  if (parts.length !== 2) return false;
+  const [raw, sig] = parts;
+  const expected = crypto.createHmac("sha256", ADMIN_TOKEN_SECRET).update(raw).digest("hex");
+  try {
+    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
+
+function requireAdmin(req, res, next) {
+  const auth = req.headers.authorization || "";
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  const token = m ? m[1] : "";
+  if (!verifyToken(token)) return res.status(401).json({ error: "Unauthorized" });
+  next();
+}
+
+// ====== COMMENTS API ======
+app.get("/comments", async (req, res) => {
+  if (!pool) return res.status(500).json({ error: "DB not configured" });
+
+  try {
+    const { rows } = await pool.query(
+      `select id, username, text, heart,
+              to_char(created_at, 'DD/MM/YYYY HH24:MI:SS') as date
+       from comments
+       order by id desc
+       limit 200`
+    );
+    res.json(rows);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+app.post("/comments", async (req, res) => {
+  if (!pool) return res.status(500).json({ error: "DB not configured" });
+
+  try {
+    const username = String(req.body?.username || "").trim();
+    const text = String(req.body?.text || "").trim();
+
+    if (!username) return res.status(400).json({ error: "Vui lòng nhập nickname" });
+    if (!text) return res.status(400).json({ error: "Vui lòng nhập nội dung góp ý" });
+
+    const { rows } = await pool.query(
+      `insert into comments (username, text)
+       values ($1, $2)
+       returning id, username, text, heart,
+                 to_char(created_at, 'DD/MM/YYYY HH24:MI:SS') as date`,
+      [username.slice(0, 50), text.slice(0, 1000)]
+    );
+
+    res.json({ ok: true, item: rows[0] });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+// Admin login: trả token
+app.post("/admin/login", (req, res) => {
+  const password = String(req.body?.password || "");
+
+  if (!ADMIN_PASSWORD || !ADMIN_TOKEN_SECRET) {
+    return res.status(500).json({ error: "Admin not configured" });
+  }
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Sai mật khẩu" });
+  }
+  const token = makeToken();
+  res.json({ ok: true, token });
+});
+
+// Toggle heart (admin only)
+app.post("/comments/:id/toggle-heart", requireAdmin, async (req, res) => {
+  if (!pool) return res.status(500).json({ error: "DB not configured" });
+
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+
+    const { rows } = await pool.query(
+      `update comments
+       set heart = not heart
+       where id = $1
+       returning id, heart`,
+      [id]
+    );
+
+    if (rows.length === 0) return res.status(404).json({ error: "Not found" });
+    res.json({ ok: true, item: rows[0] });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 // ====== CHAT API (Gemini) ======
@@ -59,8 +208,7 @@ app.post("/chat", async (req, res) => {
 
     const data = JSON.parse(raw);
 
-    const answer =
-      data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     res.json({ answer });
   } catch (err) {
@@ -182,5 +330,5 @@ wss.on("connection", (ws) => {
 
 // ================== START SERVER ==================
 server.listen(PORT, () => {
-  console.log("WS + Gemini API server listening on port", PORT);
+  console.log("Server listening on port", PORT);
 });
