@@ -815,6 +815,21 @@ if (chatInput) {
   const btnShare = document.getElementById("btn-share");
   const formEl = document.getElementById("benhanForm");
 
+  // Disable nút Chia sẻ khi đã vào room (đang chia sẻ)
+  function setShareButtonDisabled(disabled, label) {
+    if (!btnShare) return;
+    btnShare.disabled = !!disabled;
+    btnShare.classList.toggle("is-disabled", !!disabled);
+    if (label) btnShare.textContent = label;
+    if (disabled) {
+      btnShare.setAttribute("aria-disabled", "true");
+      btnShare.title = "Đang trong phiên chia sẻ";
+    } else {
+      btnShare.removeAttribute("aria-disabled");
+      btnShare.title = "";
+    }
+  }
+
   const state = {
     ws: null,
     room: null,
@@ -875,7 +890,7 @@ if (chatInput) {
         </span>
       </div>
       <div class="share-hint">
-        Mở link này ở máy khác (hoặc tab ẩn danh) để cùng nhập liệu realtime. Bấm <b>Xoá hết</b> cũng sẽ đồng bộ.
+       Copy link phía trên và gửi cho mọi người để làm bệnh án cùng nhau
       </div>
     `, true);
   }
@@ -891,7 +906,7 @@ if (chatInput) {
         </span>
       </div>
       <div class="share-hint">
-        Bạn đang ở phiên chia sẻ. Mọi thay đổi sẽ tự đồng bộ qua lại.
+        Bạn đang ở phiên bệnh án do người khác chia sẽ, mọi thay đổi sẽ tự động lưu lại.
       </div>
     `, true);
   }
@@ -1109,6 +1124,10 @@ if (chatInput) {
     // Copy link ngay khi bấm (nếu được)
     try { await navigator.clipboard.writeText(link); } catch (_) {}
 
+    // Đã bắt đầu chia sẻ => khoá nút Chia sẻ
+    setShareButtonDisabled(true, "Đang chia sẻ");
+
+
     connect(room, { showNotice: true });
     window.__SHARE_SYNC__.enabled = true;
 
@@ -1122,6 +1141,8 @@ if (chatInput) {
   // Auto-connect khi người nhận mở link có ?room=
   const roomFromUrl = getRoomFromURL();
   if (roomFromUrl) {
+    // Nếu mở bằng link có room => đang trong phiên chia sẻ, khoá nút Chia sẻ
+    setShareButtonDisabled(true, "Đang chia sẻ");
     connect(roomFromUrl, { showNotice: false });
     window.__SHARE_SYNC__.enabled = true;
     // vẫn cho thấy đang đồng bộ (không hiện hint “nhấn chia sẻ…”)
