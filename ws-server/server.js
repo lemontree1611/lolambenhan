@@ -40,7 +40,7 @@ app.use(
         ? cb(null, true)
         : cb(new Error("Not allowed by CORS"));
     },
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
@@ -186,6 +186,26 @@ app.post("/comments/:id/toggle-heart", requireAdmin, async (req, res) => {
     res.status(500).json({ error: "DB error" });
   }
 });
+
+// Delete comment (admin only)
+app.delete("/comments/:id", requireAdmin, async (req, res) => {
+  if (!pool) return res.status(500).json({ error: "DB not configured" });
+
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+
+    const { rowCount } = await pool.query(`delete from comments where id = $1`, [id]);
+
+    if (rowCount === 0) return res.status(404).json({ error: "Not found" });
+    res.json({ ok: true, id });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+
 
 // ====== CHAT API (Gemini) ======
 app.post("/chat", async (req, res) => {
