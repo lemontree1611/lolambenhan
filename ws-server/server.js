@@ -224,12 +224,12 @@ const server = http.createServer(app);
 // ================== WEBSOCKET ==================
 const wss = new WebSocket.Server({ server });
 
-// roomId -> { clients:Set<ws>, lastState:Object|null, locks:Map<string,{by:string,at:number}> }|// roomId -> { clients:Set<ws>, lastState:Object|null, locks:Map<string,{by:string,at:number}> }
+// roomId -> { clients:Set<ws>, lastState:Object|null, locks:Map<string,{by:string,at:number}> }
 const rooms = new Map();
 
 function getRoom(roomId) {
   if (!rooms.has(roomId)) {
-    rooms.set(roomId, { clients: new Set(), lastState: // roomId -> { clients:Set<ws>, lastState:Object|null, locks:Map<string,{by:string,at:number}> });
+    rooms.set(roomId, { clients: new Set(), lastState: null, locks: new Map() });
   }
   return rooms.get(roomId);
 }
