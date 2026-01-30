@@ -35,6 +35,25 @@
     <title>LoLamBenhAn - Hỗ trợ sinh viên Y khoa làm bệnh án nhanh chóng</title>
 
     <link rel="stylesheet" href="source/trangchu.css?v=1.0.2">
+
+    <style>
+        /* Admin delete button (fallback styles if CSS file doesn't define it) */
+        .comment-actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+        .delete-admin-btn{
+            appearance:none; border:0; cursor:pointer;
+            padding:8px 12px; border-radius:12px;
+            background: rgba(255, 59, 48, .12);
+            color: rgba(255, 59, 48, .95);
+            font-weight: 700;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: transform .12s ease, background .12s ease;
+        }
+        .delete-admin-btn:hover{background: rgba(255, 59, 48, .18); transform: translateY(-1px);}
+        .delete-admin-btn:active{transform: translateY(0);}
+        .delete-admin-btn[disabled]{opacity:.6; cursor:not-allowed; transform:none;}
+    </style>
+
 </head>
 <body>
     <div class="bg-fixed" aria-hidden="true"></div>
@@ -203,7 +222,7 @@
         }
 
         function renderHeartControls(comment){
-            // Admin: hiện nút bấm ♥
+            // Admin: hiện nút bấm ♥ + nút xóa
             if (isAdmin) {
                 return `
                     <div class="comment-actions">
@@ -211,6 +230,12 @@
                             title="${comment.heart ? 'Bỏ tim' : 'Thả tim'}"
                             onclick="toggleHeart(${comment.id})">
                             <span class="heart-admin-text" aria-hidden="true">♥ Admin</span>
+                        </button>
+
+                        <button class="delete-admin-btn" type="button"
+                            title="Xóa góp ý"
+                            onclick="deleteComment(${comment.id}, this)">
+                            🗑 Xóa
                         </button>
                     </div>
                 `;
@@ -391,6 +416,52 @@
                 alert('Không thể thả tim. Vui lòng thử lại!');
             }
         }
+
+        async function deleteComment(id, btnEl) {
+            if (!isAdmin || !adminToken) return;
+
+            const ok = confirm('Bạn chắc chắn muốn xóa góp ý này? Hành động này không thể hoàn tác.');
+            if (!ok) return;
+
+            // UX: disable button while deleting
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.textContent = 'Đang xóa...';
+            }
+
+            const headers = { 'Authorization': `Bearer ${adminToken}` };
+
+            // Try the most standard REST endpoint first
+            try {
+                let res = await fetch(`${API_BASE}/comments/${id}`, { method: 'DELETE', headers });
+                let data = await res.json().catch(() => ({}));
+
+                // Fallbacks if backend uses different route/method
+                if (!res.ok) {
+                    // Some backends use POST for delete
+                    res = await fetch(`${API_BASE}/comments/${id}/delete`, { method: 'POST', headers });
+                    data = await res.json().catch(() => ({}));
+                }
+
+                if (res.ok && (data.ok || data.success || data.deleted || data.result === 'ok')) {
+                    // If current page becomes empty after delete, step back one page safely
+                    await loadComments();
+                    const totalPages = Math.max(1, Math.ceil(comments.length / commentsPerPage));
+                    if (currentPage > totalPages) currentPage = totalPages;
+                    renderComments();
+                } else {
+                    alert('Lỗi: ' + (data.error || 'Không thể xóa góp ý'));
+                }
+            } catch (e) {
+                alert('Không thể xóa góp ý. Vui lòng thử lại!');
+            } finally {
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.textContent = '🗑 Xóa';
+                }
+            }
+        }
+
 
         // Bind events
         document.getElementById('admin-btn').addEventListener('click', openAdminModal);
