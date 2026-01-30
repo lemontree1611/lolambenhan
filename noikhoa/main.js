@@ -596,13 +596,12 @@ const chatSend = document.getElementById("chat-send");
 const chatInput = document.getElementById("chat-text");
 const chatMessages = document.getElementById("chat-messages");
 
-
 // ===============================
-//  CHAT API URL
-//  - Mặc định giữ endpoint cũ của main1
-//  - Bạn có thể đổi sang Render giống main-src nếu muốn
+//  CHAT API (Render)
+//  Backend proxy gọi Gemini, trả JSON: { answer: "..." }
+//  (Đổi domain nếu Render của bạn khác)
 // ===============================
-const CHAT_API_URL = \"../source/apikey.php\";
+const CHAT_API_URL = "https://lolambenhan.onrender.com/chat";
 
 if (chatToggleBtn && chatBox) {
   chatToggleBtn.onclick = () => {
@@ -748,13 +747,11 @@ async function sendMessage() {
   }, 10000);
 
   try {
-    // Bơm context từ form (tóm tắt + chẩn đoán sơ bộ)
+    // ✅ Cách 3: bơm context từ form (tóm tắt + chẩn đoán sơ bộ)
     const formContext = buildFormContextForBot();
-    const userContent = formContext ? (formContext + "
+    const userContent = formContext ? (formContext + "\n\nCâu hỏi: " + text) : text;
 
-Câu hỏi: " + text) : text;
-
-    // lưu lịch sử theo mode
+    // ✅ Cách 1/2/3: lưu lịch sử theo mode
     chatHistory.push({ role: "user", content: userContent });
     saveChatHistory();
 
@@ -764,7 +761,7 @@ Câu hỏi: " + text) : text;
       body: JSON.stringify({ messages: chatHistory })
     });
 
-    // Đọc text trước để tránh lỗi: server trả HTML (hoặc text không phải JSON)
+    // Đọc text trước để tránh lỗi: Unexpected token '<' (server trả HTML)
     const raw = await response.text();
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${raw.slice(0, 200)}`);
@@ -777,13 +774,10 @@ Câu hỏi: " + text) : text;
       throw new Error(`Server không trả JSON. Nhận: ${raw.slice(0, 200)}`);
     }
 
-    // Hỗ trợ nhiều định dạng trả về:
-    // - main-src (Render): { answer: "..." }
-    // - OpenAI-like: { choices: [{ message: { content: "..." } }] }
-    const reply =
-      (data && typeof data.answer === "string" && data.answer.trim()) ? data.answer.trim()
-      : (data?.choices?.[0]?.message?.content ? String(data.choices[0].message.content).trim() : "")
-        || "Bot không trả lời.";
+    // Backend Render (Gemini proxy) trả { answer: "..." }
+    const reply = (data && typeof data.answer === "string" && data.answer.trim())
+      ? data.answer.trim()
+      : "Bot không trả lời.";
 
     clearTimeout(timeoutId);
     loadingEl.remove();
@@ -1227,4 +1221,3 @@ if (chatInput) {
   }
 
 })();
-
