@@ -76,8 +76,6 @@ function updateAgeUI() {
   }
   updateTomtat();
   scheduleGrowthCheck();
-  // cập nhật lại đánh giá Z-score khi tuổi thay đổi
-  if (typeof scheduleGrowthCheck === 'function') scheduleGrowthCheck();
 }
 
 ngaysinhInput?.addEventListener('input', updateAgeUI);
@@ -177,7 +175,7 @@ Yêu cầu trả kết quả:
 `.trim();
 
   try {
-    const response = await fetch("../source/apikey.php", {
+        const response = await fetch("https://lolambenhan.onrender.com/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -188,8 +186,21 @@ Yêu cầu trả kết quả:
       })
     });
 
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
+    // đọc text trước để tránh lỗi parse JSON nếu server trả HTML
+    const raw = await response.text();
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${raw.slice(0, 200)}`);
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (_) {
+      throw new Error(`Server không trả JSON. Nhận: ${raw.slice(0, 200)}`);
+    }
+
+    // Render chat API trả { answer: "..." }
+    const text = (data && typeof data.answer === "string") ? data.answer : "";
 
     // cố gắng parse JSON từ AI
     let obj = null;
