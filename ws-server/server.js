@@ -16,10 +16,19 @@ const app = express();
 
 // ====== CORS ======
 // Nếu muốn chặt hơn: set CORS_ORIGINS="https://xxx.github.io,https://domain.com"
-const corsOrigins = (process.env.CORS_ORIGINS || "")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+// Mặc định cho phép Vercel production domain của bạn (để tránh lỗi 500 khi deploy Vercel).
+const defaultCorsOrigins = ["https://lolambenhan.vercel.app"];
+
+const corsOrigins = Array.from(
+  new Set(
+    defaultCorsOrigins.concat(
+      (process.env.CORS_ORIGINS || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean)
+    )
+  )
+);
 
 app.use(
   cors({
@@ -37,6 +46,15 @@ app.use(
 );
 
 app.use(express.json({ limit: "1mb" }));
+
+// Trả về 403 JSON thay vì 500 HTML khi bị chặn CORS (giúp debug dễ hơn)
+app.use((err, req, res, next) => {
+  if (err && String(err.message || "").includes("Not allowed by CORS")) {
+    return res.status(403).json({ error: "CORS blocked", origin: req.headers.origin || null });
+  }
+  return next(err);
+});
+
 
 app.get("/", (req, res) => {
   res.send("WS + Gemini API server is running.");
