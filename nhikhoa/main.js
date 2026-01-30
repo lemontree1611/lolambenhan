@@ -1367,8 +1367,6 @@ function snapshotData() {
 
     state.ws.send(JSON.stringify(obj));
   }
-    state.ws.send(JSON.stringify(obj));
-  }
 
   function scheduleSendState(immediate = false) {
     if (!state.connected || state.applyingRemote) return;
