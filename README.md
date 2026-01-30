@@ -1,6 +1,6 @@
-# 🏥 LolamBenhAn
+# 🏥 LoLamBenhAn
 
-**LolamBenhAn** là một web app hỗ trợ **làm – quản lý – chia sẻ bệnh án điện tử**, hướng tới sinh viên y khoa cần làm bệnh án nhanh, chính xác và có thể làm việc nhóm hiệu quả.
+**LoLamBenhAn** là một web app hỗ trợ **làm – quản lý – chia sẻ bệnh án điện tử**, hướng tới sinh viên y khoa cần làm bệnh án nhanh, chính xác và có thể làm việc nhóm hiệu quả.
 
 ---
 
