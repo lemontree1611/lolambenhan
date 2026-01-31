@@ -53,20 +53,24 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
 .messages{
   flex:1;
   overflow:auto;
-  padding:14px 12px 90px; /* chừa chỗ cho composer */
+  padding:14px 12px 90px;
   -webkit-overflow-scrolling: touch;
 }
 
 /* message bubble */
 .msg{margin:10px 0; display:flex;}
 .bubble{
-  width:100%;
-  background:var(--card);
+  display:inline-block;        
+  max-width: 75%;             
+  width: fit-content;          
+  background:#fff;
   border:1px solid var(--border);
   border-radius:20px;
-  padding:12px;
+  padding:12px 14px;
   box-shadow:0 6px 16px rgba(0,0,0,.05);
+  word-wrap: break-word;
 }
+
 .meta{display:flex;gap:10px;align-items:baseline}
 .name{font-weight:650;font-size:14px}
 .time{color:var(--sub);font-size:12px}
