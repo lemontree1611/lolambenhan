@@ -12,12 +12,10 @@
   <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
   <!-- Cloudinary upload widget -->
   <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
-
 </head>
 
 <body>
   <div class="app">
-    <!-- Top bar -->
     <header class="topbar">
       <a class="back" href="../" aria-label="Về trang chủ">←</a>
       <div class="title">
@@ -27,31 +25,25 @@
       <div id="me" class="me"></div>
     </header>
 
-    <!-- Login overlay (đè lên full màn hình trước khi chat) -->
     <section id="loginOverlay" class="overlay">
       <div class="loginCard">
         <h1>Đăng nhập để tham gia hội chẩn</h1>
-        
         <div id="gBtn"></div>
-
         <p class="hint">Tên Google sẽ dùng làm username.</p>
       </div>
     </section>
 
-    <!-- Messages -->
     <main id="messages" class="messages" aria-live="polite"></main>
 
-    <!-- Composer bottom -->
     <footer class="composer">
       <button id="btnImg" class="iconbtn" title="Gửi ảnh" aria-label="Gửi ảnh">＋</button>
       <input id="input" class="input" placeholder="Nhắn gì đó…" maxlength="1000" />
       <button id="send" class="send" disabled>Gửi</button>
     </footer>
 
-    <!-- Cooldown toast -->
     <div id="cooldown" class="cooldown hidden"></div>
   </div>
 
-  <script src="./app.js"></script>
+  <script src="./app.js" defer></script>
 </body>
 </html>
