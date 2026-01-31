@@ -16,7 +16,6 @@ function base64UrlToUint8Array(base64Url) {
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
-
 function decodeJwtPayloadUtf8(jwt) {
   const payloadPart = jwt.split(".")[1];
   const bytes = base64UrlToUint8Array(payloadPart);
@@ -42,7 +41,7 @@ function hideLoginOverlay() {
   const ov = $("loginOverlay");
   if (!ov) return;
   ov.classList.add("hidden");
-  ov.style.display = "none"; // ăn chắc
+  ov.style.display = "none";
 }
 
 function onLoginSuccess(payload) {
@@ -85,7 +84,7 @@ function renderGoogleButton() {
   });
 }
 
-/* ✅ Boot */
+/* Boot */
 window.addEventListener("load", () => {
   const t = setInterval(() => {
     if (window.google?.accounts?.id) {
@@ -96,17 +95,14 @@ window.addEventListener("load", () => {
   }, 100);
 });
 
-/* ===== Chat UI (local demo) ===== */
-
 function scrollBottom() {
   const box = $("messages");
   box.scrollTop = box.scrollHeight;
 }
 
 /**
- * Render message bubble.
- * - mine: right + blue (CSS handles via .msg.me)
- * - mine cannot heart (disabled) but show count
+ * - Tin của mình: class .me (CSS đẩy sang phải)
+ * - Tin của mình không thả tim được, chỉ hiển thị số tim
  */
 function renderLocalMessage({ userName, text, imageUrl, hearts = 0 }) {
   const msg = {
@@ -160,7 +156,7 @@ function renderLocalMessage({ userName, text, imageUrl, hearts = 0 }) {
   scrollBottom();
 }
 
-/* ===== Cooldown 5s ===== */
+/* Cooldown 5s */
 let cooldownTimer = null;
 
 function startCooldown(ms) {
@@ -197,10 +193,8 @@ function sendTextLocal() {
   startCooldown(5000);
 }
 
-/* ===== Bind UI ===== */
-// Ban đầu disable cho tới khi login thành công
+/* Bind UI */
 $("send").disabled = true;
-
 $("send").addEventListener("click", sendTextLocal);
 $("input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendTextLocal();
