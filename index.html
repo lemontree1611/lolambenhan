@@ -56,8 +56,32 @@
 
 </head>
 <body>
-    
     <div class="bg-fixed" aria-hidden="true"></div>
+
+
+<!-- ===== ADMIN ANNOUNCEMENT POPUP (HARDCODE) ===== -->
+<div class="announce-backdrop" id="announce-modal" aria-hidden="false">
+    <div class="announce-modal" role="dialog" aria-modal="true" aria-labelledby="announce-title" aria-describedby="announce-desc">
+        <div class="announce-header">
+            <div>
+                <div class="announce-title" id="announce-title">Thông báo từ Admin</div>
+                <div class="announce-sub">Cập nhật mới nhất</div>
+            </div>
+            <button class="announce-close" type="button" id="announce-close" aria-label="Đóng">✕</button>
+        </div>
+
+        <div class="announce-body" id="announce-desc">
+            <p class="announce-message">
+                📢 Cần các bạn gửi form chuẩn bệnh án <b>YHCT, RHM, GMHS...</b> để mình thêm cho mọi người cùng làm. Gửi trực tiếp <b>file word / link gg doc</b> nha, xin cảm ơn! FB: https://facebook.com/lemontree1611
+            </p>
+            <div class="announce-actions">
+                <button class="announce-btn" type="button" id="announce-ok">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ============================================ -->
+
 
     <!-- Admin login button (Liquid Glass) - góc phải -->
     <div class="admin-widget">
@@ -479,6 +503,47 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeAdminModal();
         });
+
+
+// ===== Admin Announcement Popup (HARDCODE) =====
+(function initAnnouncementPopup(){
+    const KEY = 'announcement_closed_session_v1'; // đổi tên key nếu muốn popup hiện lại
+    const modal = document.getElementById('announce-modal');
+    const btnClose = document.getElementById('announce-close');
+    const btnOk = document.getElementById('announce-ok');
+
+    if (!modal) return;
+
+    function closePopup(){
+        modal.classList.add('is-hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        // Không hiện lại trong phiên (tab) hiện tại
+        try { sessionStorage.setItem(KEY, '1'); } catch(e) {}
+    }
+
+    // Ẩn nếu đã đóng trong session
+    try {
+        if (sessionStorage.getItem(KEY) === '1') {
+            modal.classList.add('is-hidden');
+            modal.setAttribute('aria-hidden', 'true');
+            return;
+        }
+    } catch(e) {}
+
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'announce-modal') closePopup();
+    });
+
+    if (btnClose) btnClose.addEventListener('click', closePopup);
+    if (btnOk) btnOk.addEventListener('click', closePopup);
+
+    // ESC closes (avoid interfering with admin modal logic)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('is-hidden')) closePopup();
+    });
+})();
+// =============================================
 
         loadComments();
     </script>
