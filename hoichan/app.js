@@ -1,82 +1,71 @@
-// === TẠM THỜI: test UI offline trước ===
-// Khi bạn có backend, mình sẽ thay bằng socket + Google verify.
 let canSendAt = 0;
 
 const $ = (id) => document.getElementById(id);
 const show = (el, yes) => el.classList.toggle("hidden", !yes);
 
-// 1) Login overlay: tạm cho bạn bấm "fake login" bằng cách ẩn overlay
-// Khi làm thật: Google callback sẽ gọi hide overlay và set username
-window.onGoogleCredential = () => {}; // placeholder để tránh lỗi nếu chưa cấu hình
-
-const GOOGLE_CLIENT_ID = "809932517901-53dirqapfjqbroadjilk8oeqtj0qugfj.apps.googleusercontent.com";
-
-const $ = (id) => document.getElementById(id);
-const show = (el, yes) => el.classList.toggle("hidden", !yes);
+// ✅ DÁN CLIENT ID CỦA BẠN
+const GOOGLE_CLIENT_ID =
+  "809932517901-53dirqapfjqbroadjilk8oeqtj0qugfj.apps.googleusercontent.com";
 
 function hideLoginOverlay() {
   const ov = $("loginOverlay");
   if (!ov) return;
-  ov.classList.add("hidden");        // cách 1
-  ov.style.display = "none";         // cách 2 (ăn chắc)
+  ov.classList.add("hidden");
+  ov.style.display = "none"; // ăn chắc
 }
 
 function onLoginSuccess(payload) {
-  // payload.name, payload.email, payload.picture
-  const meEl = $("me");
-  const statusEl = $("status");
-  if (meEl) meEl.textContent = payload.name || "User";
-  if (statusEl) statusEl.textContent = "Đã đăng nhập";
-
+  $("me").textContent = payload?.name || "User";
+  $("status").textContent = "Đã đăng nhập";
   hideLoginOverlay();
-  const sendBtn = $("send");
-  if (sendBtn) sendBtn.disabled = false;
+  $("send").disabled = false;
 }
 
-// Render Google button full width theo đúng card
-function renderGoogleButtonFullWidth() {
-  const btnHost = $("gBtn");
+// ✅ Render nút Google full width theo khung loginCard
+function renderGoogleButton() {
+  const host = $("gBtn");
   const card = document.querySelector(".loginCard");
-  if (!btnHost || !card) return;
+  if (!host || !card) return;
 
-  btnHost.innerHTML = ""; // clear để render lại khi resize
-  const width = Math.min(card.clientWidth, 420); // giới hạn đẹp
+  host.innerHTML = "";
+  const width = Math.floor(card.clientWidth); // full width
+
+  // Đợi script GIS sẵn sàng
+  if (!window.google?.accounts?.id) return;
 
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: (resp) => {
-      // resp.credential là ID token (JWT)
-      // Frontend demo: decode lấy name để ẩn overlay
-      // (Sau này có backend thì gửi token về server verify)
-      const payload = JSON.parse(atob(resp.credential.split(".")[1]));
-      onLoginSuccess(payload);
+      try {
+        // decode JWT payload (demo frontend)
+        const payload = JSON.parse(atob(resp.credential.split(".")[1]));
+        onLoginSuccess(payload);
+      } catch (e) {
+        console.error("Decode token failed", e);
+        alert("Login xong nhưng đọc thông tin lỗi. Thử lại nhé.");
+      }
     },
   });
 
-  google.accounts.id.renderButton(btnHost, {
+  google.accounts.id.renderButton(host, {
     theme: "outline",
     size: "large",
     text: "signin_with",
     shape: "pill",
-    width, // ✅ full width theo card
+    width, // ✅ full width
   });
-
-  // Không tự bật prompt nổi
-  // google.accounts.id.prompt();
 }
 
-// Đợi GIS load xong rồi render
+// Chờ GIS load xong rồi render (vì script async defer)
 window.addEventListener("load", () => {
-  // GIS script async nên đôi khi cần đợi google xuất hiện
   const t = setInterval(() => {
     if (window.google?.accounts?.id) {
       clearInterval(t);
-      renderGoogleButtonFullWidth();
-      window.addEventListener("resize", renderGoogleButtonFullWidth);
+      renderGoogleButton();
+      window.addEventListener("resize", renderGoogleButton);
     }
   }, 100);
 });
-
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({
@@ -146,20 +135,22 @@ function sendTextLocal() {
   const text = $("input").value.trim();
   if (!text) return;
 
-  renderLocalMessage({ userName: "Bạn", text });
+  const name = $("me").textContent?.trim() || "Bạn";
+  renderLocalMessage({ userName: name, text });
   $("input").value = "";
 
   canSendAt = Date.now() + 5000;
   startCooldown(5000);
 }
 
-$("send").disabled = false;
+// ⚠️ Ban đầu vẫn disable cho tới khi login xong
+$("send").disabled = true;
 $("send").onclick = sendTextLocal;
 $("input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendTextLocal();
 });
 
-// Upload ảnh: tạm dùng file local preview (không cần Cloudinary để test UI)
+// Upload ảnh local preview
 $("btnImg").onclick = async () => {
   const picker = document.createElement("input");
   picker.type = "file";
@@ -168,7 +159,8 @@ $("btnImg").onclick = async () => {
     const file = picker.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    renderLocalMessage({ userName: "Bạn", imageUrl: url });
+    const name = $("me").textContent?.trim() || "Bạn";
+    renderLocalMessage({ userName: name, imageUrl: url });
   };
   picker.click();
 };
