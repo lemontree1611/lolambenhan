@@ -58,17 +58,31 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
 }
 
 /* message bubble */
-.msg{margin:10px 0; display:flex;}
+.msg{margin:10px 0; display:flex;justify-content:flex-start;}
+.msg.me{
+  justify-content: flex-end;
+}
 .bubble{
   display:inline-block;        
   max-width: 75%;             
   width: fit-content;          
   background:#fff;
-  border:1px solid var(--border);
   border-radius:20px;
   padding:12px 14px;
   box-shadow:0 6px 16px rgba(0,0,0,.05);
   word-wrap: break-word;
+}
+.msg.me .bubble{
+  background:#007aff;          /* Apple blue */
+  color:#fff;
+  border:none;
+}
+.msg.me .name,
+.msg.me .time{
+  color:rgba(255,255,255,.85);
+}
+.msg.me .name{
+  display:none;
 }
 
 .meta{display:flex;gap:10px;align-items:baseline}
