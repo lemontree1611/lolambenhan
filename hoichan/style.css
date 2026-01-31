@@ -7,91 +7,89 @@
   --sub:#6b7280;
   --shadow:0 10px 30px rgba(0,0,0,.10);
   --radius:22px;
-
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
 .hidden{display:none!important}
 
-#gBtn { width: 100%; }
-#gBtn > div { width: 100% !important; }
+#gBtn { width:100%; }
+#gBtn > div { width:100% !important; }
 
-.app{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-}
+.app{height:100%;display:flex;flex-direction:column}
 
 /* Topbar */
 .topbar{
-  position:sticky; top:0; z-index:20;
-  display:flex; align-items:center; gap:10px;
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;gap:10px;
   padding:12px 14px;
   background:var(--panel);
   backdrop-filter: blur(14px);
   border-bottom:1px solid var(--border);
 }
 .back{
-  width:36px;height:36px;
-  display:grid;place-items:center;
-  border-radius:999px;
-  text-decoration:none;
-  color:var(--text);
-  border:1px solid var(--border);
-  background:#fff;
+  width:36px;height:36px;display:grid;place-items:center;
+  border-radius:999px;text-decoration:none;color:var(--text);
+  border:1px solid var(--border);background:#fff;
 }
 .title{flex:1;min-width:0}
 .title-main{font-weight:700;line-height:1.1}
 .title-sub{font-size:12px;color:var(--sub);margin-top:2px}
 .me{font-size:13px;color:var(--sub);max-width:35vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* Messages area */
+/* Messages */
 .messages{
-  flex:1;
-  overflow:auto;
+  flex:1;overflow:auto;
   padding:14px 12px 90px;
   -webkit-overflow-scrolling: touch;
+
+  /* ✅ CỰC QUAN TRỌNG: không cho căn giữa */
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  text-align:left;
 }
 
-/* message row */
+/* Message row (full width để đẩy trái/phải) */
 .msg{
   margin:10px 0;
+  width:100%;
   display:flex;
+  justify-content:flex-start;
+  align-self:stretch;
 }
+.msg.me{justify-content:flex-end}
 
-/* bubble */
+/* Bubble */
 .bubble{
   display:inline-block;
   width:fit-content;
   max-width:75%;
   background:#fff;
+  border:1px solid var(--border);
   border-radius:20px;
   padding:12px 14px;
   box-shadow:0 6px 16px rgba(0,0,0,.05);
   word-wrap:break-word;
 }
-
-/* bubble của mình - xanh Apple */
 .msg.me .bubble{
   background:#007aff;
   color:#fff;
   border:none;
 }
 
-/* meta */
+/* Meta */
 .meta{display:flex;gap:10px;align-items:baseline}
 .name{font-weight:650;font-size:14px}
 .time{color:var(--sub);font-size:12px}
 .text{margin-top:6px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
 
-/* meta trên bubble của mình */
-.msg.me .time{color:rgba(255,255,255,.85)}
+/* Meta của mình */
 .msg.me .name{display:none}
+.msg.me .time{color:rgba(255,255,255,.85)}
 
-/* image */
+/* Image */
 .img{
   margin-top:10px;
   width:100%;
@@ -101,7 +99,7 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   border:1px solid var(--border);
 }
 
-/* heart */
+/* Heart */
 .heart{
   margin-top:10px;
   border:1px solid var(--border);
@@ -111,18 +109,15 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   font-size:14px;
   cursor:pointer;
 }
-.heart:active{transform:scale(.98)}
-
-/* yêu cầu: tin của mình KHÔNG thả tim được nhưng vẫn hiện số */
 .msg.me .heart{
-  pointer-events:none;
+  pointer-events:none; /* ✅ mình không thả tim */
   opacity:.9;
 }
 
-/* Composer bottom */
+/* Composer */
 .composer{
-  position:sticky; bottom:0; z-index:20;
-  display:flex; gap:10px; align-items:center;
+  position:sticky;bottom:0;z-index:20;
+  display:flex;gap:10px;align-items:center;
   padding:12px;
   padding-bottom: calc(12px + env(safe-area-inset-bottom));
   background:var(--panel);
@@ -130,49 +125,38 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   border-top:1px solid var(--border);
 }
 .iconbtn{
-  width:42px;height:42px;
-  border-radius:999px;
-  border:1px solid var(--border);
-  background:#fff;
-  font-size:22px;
-  cursor:pointer;
+  width:42px;height:42px;border-radius:999px;
+  border:1px solid var(--border);background:#fff;
+  font-size:22px;cursor:pointer;
 }
 .input{
-  flex:1;
-  height:42px;
-  border-radius:999px;
+  flex:1;height:42px;border-radius:999px;
   border:1px solid var(--border);
-  padding:0 14px;
-  outline:none;
-  background:#fff;
+  padding:0 14px;outline:none;background:#fff;
 }
 .send{
-  height:42px;
-  border-radius:999px;
+  height:42px;border-radius:999px;
   border:1px solid var(--border);
   background:#111;color:#fff;
-  padding:0 16px;
-  cursor:pointer;
+  padding:0 16px;cursor:pointer;
 }
 .send:disabled{opacity:.55;cursor:not-allowed}
 
-/* Login overlay */
+/* Overlay */
 .overlay{
-  position:fixed; inset:0;
-  z-index:50;
-  display:grid; place-items:center;
+  position:fixed;inset:0;z-index:50;
+  display:grid;place-items:center;
   background:rgba(245,245,247,.15);
   backdrop-filter: blur(3px);
   padding:18px;
 }
 .loginCard{
-  width:min(440px, 100%);
+  width:min(440px,100%);
   background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
-  padding:18px;
-  text-align:center;
+  padding:18px;text-align:center;
 }
 .loginCard h1{margin:0 0 14px;font-size:20px}
 .hint{margin-top:12px;color:var(--sub);font-size:13px}
@@ -183,37 +167,8 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   left:50%;
   bottom: calc(76px + env(safe-area-inset-bottom));
   transform:translateX(-50%);
-  background:#111;
-  color:#fff;
-  padding:10px 12px;
-  border-radius:999px;
-  font-size:13px;
-  z-index:60;
+  background:#111;color:#fff;
+  padding:10px 12px;border-radius:999px;
+  font-size:13px;z-index:60;
   box-shadow:0 10px 30px rgba(0,0,0,.18);
-}
-
-/* =========================================================
-   FORCE FIX (đập chết mọi rule căn giữa gây lỗi)
-   ========================================================= */
-.messages{
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:stretch !important;   /* ✅ quan trọng */
-  text-align:left !important;
-}
-
-.msg{
-  width:100% !important;            /* ✅ quan trọng */
-  display:flex !important;
-  justify-content:flex-start !important;
-  align-self:stretch !important;
-}
-
-.msg.me{
-  justify-content:flex-end !important; /* ✅ đẩy sát phải */
-}
-
-.bubble{
-  width:fit-content !important;
-  max-width:75% !important;
 }
