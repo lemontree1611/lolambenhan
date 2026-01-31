@@ -3,19 +3,17 @@ let canSendAt = 0;
 const $ = (id) => document.getElementById(id);
 const show = (el, yes) => el.classList.toggle("hidden", !yes);
 
-// ✅ DÁN CLIENT ID CỦA BẠN
+// ✅ Client ID của bạn
 const GOOGLE_CLIENT_ID =
   "809932517901-53dirqapfjqbroadjilk8oeqtj0qugfj.apps.googleusercontent.com";
 
-/* ✅ FIX UTF-8: decode JWT payload đúng tiếng Việt */
+/* ✅ Decode JWT payload đúng UTF-8 (không lỗi TrÃ­ LÃª) */
 function base64UrlToUint8Array(base64Url) {
   const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
   const pad = "=".repeat((4 - (base64.length % 4)) % 4);
   const binary = atob(base64 + pad);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
 
@@ -24,6 +22,20 @@ function decodeJwtPayloadUtf8(jwt) {
   const bytes = base64UrlToUint8Array(payloadPart);
   const json = new TextDecoder("utf-8").decode(bytes);
   return JSON.parse(json);
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  })[c]);
+}
+
+function myName() {
+  return $("me")?.textContent?.trim() || "";
 }
 
 function hideLoginOverlay() {
@@ -40,23 +52,21 @@ function onLoginSuccess(payload) {
   $("send").disabled = false;
 }
 
-// ✅ Render nút Google full width theo khung loginCard
+/* ✅ Render Google button full width */
 function renderGoogleButton() {
   const host = $("gBtn");
   const card = document.querySelector(".loginCard");
   if (!host || !card) return;
 
   host.innerHTML = "";
-  const width = Math.floor(card.clientWidth); // full width
+  const width = Math.floor(card.clientWidth);
 
-  // Đợi script GIS sẵn sàng
   if (!window.google?.accounts?.id) return;
 
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: (resp) => {
       try {
-        // ✅ decode JWT payload UTF-8 (đúng tiếng Việt)
         const payload = decodeJwtPayloadUtf8(resp.credential);
         onLoginSuccess(payload);
       } catch (e) {
@@ -71,11 +81,11 @@ function renderGoogleButton() {
     size: "large",
     text: "signin_with",
     shape: "pill",
-    width, // ✅ full width
+    width,
   });
 }
 
-// Chờ GIS load xong rồi render (vì script async defer)
+/* ✅ Boot */
 window.addEventListener("load", () => {
   const t = setInterval(() => {
     if (window.google?.accounts?.id) {
@@ -86,43 +96,57 @@ window.addEventListener("load", () => {
   }, 100);
 });
 
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, (c) => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-  }[c]));
+/* ===== Chat UI (local demo) ===== */
+
+function scrollBottom() {
+  const box = $("messages");
+  box.scrollTop = box.scrollHeight;
 }
 
-function renderLocalMessage({ userName, text, imageUrl }) {
+/**
+ * Render message bubble.
+ * - mine: right + blue (CSS handles via .msg.me)
+ * - mine cannot heart (disabled) but show count
+ */
+function renderLocalMessage({ userName, text, imageUrl, hearts = 0 }) {
   const msg = {
     id: crypto.randomUUID(),
     userName,
-    text,
-    imageUrl,
+    text: text ?? "",
+    imageUrl: imageUrl ?? null,
     createdAt: new Date().toISOString(),
-    hearts: 0
+    hearts: Number.isFinite(hearts) ? hearts : 0,
   };
 
+  const isMine = msg.userName === myName();
+
   const wrap = document.createElement("div");
-  const myName = $("me").textContent?.trim();
-  wrap.className = "msg" + (msg.userName === myName ? " me" : "");
+  wrap.className = "msg" + (isMine ? " me" : "");
+
+  const timeStr = new Date(msg.createdAt).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   wrap.innerHTML = `
     <div class="bubble">
       <div class="meta">
         <span class="name">${escapeHtml(msg.userName)}</span>
-        <span class="time">${new Date(msg.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+        <span class="time">${escapeHtml(timeStr)}</span>
       </div>
+
       ${msg.text ? `<div class="text">${escapeHtml(msg.text)}</div>` : ""}
       ${msg.imageUrl ? `<img class="img" src="${msg.imageUrl}" alt="image" />` : ""}
-      <button class="heart" data-id="${msg.id}">❤️ <span>${msg.hearts}</span></button>
+
+      <button class="heart" data-id="${msg.id}" ${isMine ? "disabled" : ""} aria-label="Thả tim">
+        ❤️ <span>${msg.hearts}</span>
+      </button>
     </div>
   `;
 
-  const myName = $("me").textContent?.trim() || "";
-  const isMine = msg.userName === myName;
-  
   const heartBtn = wrap.querySelector(".heart");
-  
-  // ✅ chỉ cho thả tim tin người khác
+
+  // ✅ Chỉ cho thả tim tin người khác
   if (!isMine) {
     heartBtn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -133,10 +157,12 @@ function renderLocalMessage({ userName, text, imageUrl }) {
   }
 
   $("messages").appendChild(wrap);
-  $("messages").scrollTop = $("messages").scrollHeight;
+  scrollBottom();
 }
 
+/* ===== Cooldown 5s ===== */
 let cooldownTimer = null;
+
 function startCooldown(ms) {
   clearInterval(cooldownTimer);
   show($("cooldown"), true);
@@ -164,23 +190,24 @@ function sendTextLocal() {
   const text = $("input").value.trim();
   if (!text) return;
 
-  const name = $("me").textContent?.trim() || "Bạn";
-  renderLocalMessage({ userName: name, text });
-  $("input").value = "";
+  renderLocalMessage({ userName: myName() || "Bạn", text });
 
+  $("input").value = "";
   canSendAt = Date.now() + 5000;
   startCooldown(5000);
 }
 
-// ⚠️ Ban đầu vẫn disable cho tới khi login xong
+/* ===== Bind UI ===== */
+// Ban đầu disable cho tới khi login thành công
 $("send").disabled = true;
-$("send").onclick = sendTextLocal;
+
+$("send").addEventListener("click", sendTextLocal);
 $("input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendTextLocal();
 });
 
 // Upload ảnh local preview
-$("btnImg").onclick = async () => {
+$("btnImg").addEventListener("click", () => {
   const picker = document.createElement("input");
   picker.type = "file";
   picker.accept = "image/*";
@@ -188,8 +215,7 @@ $("btnImg").onclick = async () => {
     const file = picker.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    const name = $("me").textContent?.trim() || "Bạn";
-    renderLocalMessage({ userName: name, imageUrl: url });
+    renderLocalMessage({ userName: myName() || "Bạn", imageUrl: url });
   };
   picker.click();
-};
+});
