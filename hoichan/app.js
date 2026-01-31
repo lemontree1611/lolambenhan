@@ -103,7 +103,8 @@ function renderLocalMessage({ userName, text, imageUrl }) {
   };
 
   const wrap = document.createElement("div");
-  wrap.className = "msg";
+  const myName = $("me").textContent?.trim();
+  wrap.className = "msg" + (msg.userName === myName ? " me" : "");
   wrap.innerHTML = `
     <div class="bubble">
       <div class="meta">
