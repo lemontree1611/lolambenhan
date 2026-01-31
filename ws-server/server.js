@@ -352,15 +352,24 @@ async function callGemini({ apiKey, messages }) {
 
 
 function getGroqModels() {
-  // Prefer GROQ_MODELS (comma-separated). Fallback to GROQ_MODEL, then a safe default.
-  const list = String(process.env.GROQ_MODELS || "").trim();
-  if (list) {
-    return list.split(",").map(s => s.trim()).filter(Boolean);
+  // Prefer GROQ_MODELS (comma-separated). Fallback to GROQ_MODEL.
+  // Also supports people mistakenly putting a comma-separated list into GROQ_MODEL.
+  const rawList = String(process.env.GROQ_MODELS || "").trim();
+  const rawSingle = String(process.env.GROQ_MODEL || "").trim();
+
+  const pick = rawList || rawSingle;
+
+  if (pick) {
+    return pick
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
   }
-  const single = String(process.env.GROQ_MODEL || "").trim();
-  if (single) return [single];
+
+  // Safe defaults
   return ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
 }
+
 
 
 
