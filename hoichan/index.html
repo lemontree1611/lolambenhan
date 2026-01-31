@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Hội chẩn</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Socket.IO client -->
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <!-- Cloudinary upload widget -->
+  <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <a class="back" href="../" aria-label="Về trang chủ">←</a>
+      <div class="title">
+        <div class="title-main">Hội chẩn liên chuyên khoa</div>
+        <div id="status" class="title-sub">Chưa đăng nhập</div>
+      </div>
+      <div id="me" class="me"></div>
+    </header>
+
+    <!-- Login overlay (đè lên full màn hình trước khi chat) -->
+    <section id="loginOverlay" class="overlay">
+      <div class="loginCard">
+        <h1>Đăng nhập để bắt đầu hội chẩn</h1>
+
+        <div id="g_id_onload"
+          data-client_id="809932517901-53dirqapfjqbroadjilk8oeqtj0qugfj.apps.googleusercontent.com"
+          data-callback="onGoogleCredential"
+          data-auto_prompt="false">
+        </div>
+
+        <div class="g_id_signin"
+          data-type="standard"
+          data-size="large"
+          data-theme="outline"
+          data-text="signin_with"
+          data-shape="pill">
+        </div>
+
+        <p class="hint">Tên Google sẽ dùng làm username.</p>
+      </div>
+    </section>
+
+    <!-- Messages -->
+    <main id="messages" class="messages" aria-live="polite"></main>
+
+    <!-- Composer bottom -->
+    <footer class="composer">
+      <button id="btnImg" class="iconbtn" title="Gửi ảnh" aria-label="Gửi ảnh">＋</button>
+      <input id="input" class="input" placeholder="Nhắn gì đó…" maxlength="1000" />
+      <button id="send" class="send" disabled>Gửi</button>
+    </footer>
+
+    <!-- Cooldown toast -->
+    <div id="cooldown" class="cooldown hidden"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
