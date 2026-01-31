@@ -16,6 +16,9 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
 .hidden{display:none!important}
 
+#gBtn { width: 100%; }
+#gBtn > div { width: 100% !important; }
+
 .app{
   height:100%;
   display:flex;
@@ -161,3 +164,4 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   z-index:60;
   box-shadow:0 10px 30px rgba(0,0,0,.18);
 }
+
