@@ -3,11 +3,10 @@ let canSendAt = 0;
 const $ = (id) => document.getElementById(id);
 const show = (el, yes) => el.classList.toggle("hidden", !yes);
 
-// ✅ Client ID của bạn
 const GOOGLE_CLIENT_ID =
   "809932517901-53dirqapfjqbroadjilk8oeqtj0qugfj.apps.googleusercontent.com";
 
-/* ✅ Decode JWT payload đúng UTF-8 (không lỗi TrÃ­ LÃª) */
+/* Decode JWT payload đúng UTF-8 */
 function base64UrlToUint8Array(base64Url) {
   const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
   const pad = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -51,7 +50,7 @@ function onLoginSuccess(payload) {
   $("send").disabled = false;
 }
 
-/* ✅ Render Google button full width */
+/* Render Google button full width */
 function renderGoogleButton() {
   const host = $("gBtn");
   const card = document.querySelector(".loginCard");
@@ -86,6 +85,15 @@ function renderGoogleButton() {
 
 /* Boot */
 window.addEventListener("load", () => {
+  // ✅ Force container messages thành flex column bằng JS để khỏi bị CSS khác phá
+  const msgBox = $("messages");
+  if (msgBox) {
+    msgBox.style.display = "flex";
+    msgBox.style.flexDirection = "column";
+    msgBox.style.alignItems = "stretch";
+    msgBox.style.textAlign = "left";
+  }
+
   const t = setInterval(() => {
     if (window.google?.accounts?.id) {
       clearInterval(t);
@@ -101,8 +109,9 @@ function scrollBottom() {
 }
 
 /**
- * - Tin của mình: class .me (CSS đẩy sang phải)
- * - Tin của mình không thả tim được, chỉ hiển thị số tim
+ * - Tin của mình: sát phải + xanh
+ * - Tin của mình: KHÔNG thả tim (disabled) nhưng vẫn hiển thị số
+ * - Tin người khác: sát trái + thả tim được
  */
 function renderLocalMessage({ userName, text, imageUrl, hearts = 0 }) {
   const msg = {
@@ -118,6 +127,12 @@ function renderLocalMessage({ userName, text, imageUrl, hearts = 0 }) {
 
   const wrap = document.createElement("div");
   wrap.className = "msg" + (isMine ? " me" : "");
+
+  // ✅ FORCE căn trái/phải bằng inline style (thắng mọi CSS)
+  wrap.style.display = "flex";
+  wrap.style.width = "100%";
+  wrap.style.justifyContent = isMine ? "flex-end" : "flex-start";
+  wrap.style.alignSelf = "stretch";
 
   const timeStr = new Date(msg.createdAt).toLocaleTimeString([], {
     hour: "2-digit",
@@ -142,7 +157,6 @@ function renderLocalMessage({ userName, text, imageUrl, hearts = 0 }) {
 
   const heartBtn = wrap.querySelector(".heart");
 
-  // ✅ Chỉ cho thả tim tin người khác
   if (!isMine) {
     heartBtn.addEventListener("click", (e) => {
       e.preventDefault();
@@ -200,7 +214,6 @@ $("input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendTextLocal();
 });
 
-// Upload ảnh local preview
 $("btnImg").addEventListener("click", () => {
   const picker = document.createElement("input");
   picker.type = "file";
