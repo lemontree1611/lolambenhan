@@ -73,7 +73,7 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   word-wrap: break-word;
 }
 .msg.me .bubble{
-  background:#007aff;          /* Apple blue */
+  background:#007aff;          
   color:#fff;
   border:none;
 }
@@ -83,6 +83,10 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
 }
 .msg.me .name{
   display:none;
+}
+.msg.me .heart{
+  pointer-events:none;     
+  opacity:.9;             
 }
 
 .meta{display:flex;gap:10px;align-items:baseline}
