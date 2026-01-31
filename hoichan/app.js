@@ -7,6 +7,25 @@ const show = (el, yes) => el.classList.toggle("hidden", !yes);
 const GOOGLE_CLIENT_ID =
   "809932517901-53dirqapfjqbroadjilk8oeqtj0qugfj.apps.googleusercontent.com";
 
+/* ✅ FIX UTF-8: decode JWT payload đúng tiếng Việt */
+function base64UrlToUint8Array(base64Url) {
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = "=".repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(base64 + pad);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function decodeJwtPayloadUtf8(jwt) {
+  const payloadPart = jwt.split(".")[1];
+  const bytes = base64UrlToUint8Array(payloadPart);
+  const json = new TextDecoder("utf-8").decode(bytes);
+  return JSON.parse(json);
+}
+
 function hideLoginOverlay() {
   const ov = $("loginOverlay");
   if (!ov) return;
@@ -37,8 +56,8 @@ function renderGoogleButton() {
     client_id: GOOGLE_CLIENT_ID,
     callback: (resp) => {
       try {
-        // decode JWT payload (demo frontend)
-        const payload = JSON.parse(atob(resp.credential.split(".")[1]));
+        // ✅ decode JWT payload UTF-8 (đúng tiếng Việt)
+        const payload = decodeJwtPayloadUtf8(resp.credential);
         onLoginSuccess(payload);
       } catch (e) {
         console.error("Decode token failed", e);
