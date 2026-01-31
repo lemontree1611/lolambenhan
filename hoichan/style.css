@@ -54,8 +54,6 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   overflow:auto;
   padding:14px 12px 90px;
   -webkit-overflow-scrolling: touch;
-
-  /* ✅ FIX: làm column flex để item full width */
   display:flex;
   flex-direction:column;
 }
@@ -200,4 +198,28 @@ body{margin:0;background:var(--bg);color:var(--text);overflow:hidden}
   font-size:13px;
   z-index:60;
   box-shadow:0 10px 30px rgba(0,0,0,.18);
+}
+
+/* === FORCE FIX: không cho messages căn giữa === */
+.messages{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;  
+  text-align: left !important;
+}
+
+.msg{
+  width: 100% !important;      
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-self: stretch !important;
+}
+
+.msg.me{
+  justify-content: flex-end !important;
+}
+
+.bubble{
+  width: fit-content !important;
+  max-width: 75% !important;
 }
