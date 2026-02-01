@@ -138,6 +138,7 @@
                 <div class="tab-toggle-slider"></div>
                 <button class="tab-toggle-btn active" data-tab="tutu">Tứ trụ</button>
                 <button class="tab-toggle-btn" data-tab="ckle">CK lẻ</button>
+                <button class="tab-toggle-btn" data-tab="khac">Khác</button>
             </div>
         </div>
 
@@ -151,10 +152,15 @@
             <a href="nhikhoa/" class="card"><h3>Nhi khoa</h3><p>Bệnh án nhi khoa</p></a>
         </div>
 
-        <!-- CK lẻ: GMHS, YHCT -->
+        <!-- CK lẻ: GMHS -->
         <div class="card-grid" id="grid-ckle" style="display:none;">
             <a href="gmhs/" class="card"><h3>Gây mê hồi sức</h3><p>Bệnh án gây mê hồi sức</p></a>
+        </div>
+
+        <!-- Khác: YHCT, Điều dưỡng -->
+        <div class="card-grid" id="grid-khac" style="display:none;">
             <a href="yhct/" class="card"><h3>Y học cổ truyền</h3><p>Bệnh án Y học cổ truyền</p></a>
+            <a href="dieuduong/" class="card"><h3>Điều dưỡng</h3><p>Bệnh án điều dưỡng</p></a>
         </div>
 
         <!-- Comments Section -->
@@ -567,9 +573,10 @@
     const slider   = document.querySelector('.tab-toggle-slider');
     const gridTutu = document.getElementById('grid-tutu');
     const gridCkle = document.getElementById('grid-ckle');
+    const gridKhac = document.getElementById('grid-khac');
     if(!buttons.length) return;
 
-    const grids = { tutu: gridTutu, ckle: gridCkle };
+    const grids = { tutu: gridTutu, ckle: gridCkle, khac: gridKhac };
 
     // init slider position theo nút đang active
     const initIdx = Array.from(buttons).findIndex(b => b.classList.contains('active'));
