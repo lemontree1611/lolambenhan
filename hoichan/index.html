@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hội chẩn</title>
+
+  <!-- IMPORTANT:
+    Không đặt Content-Security-Policy quá chặt nếu bạn chưa rành.
+    Nếu bạn đang có CSP ở nơi khác, connect-src phải cho phép wss://lolambenhan.onrender.com
+  -->
+
+  <link rel="stylesheet" href="./styles.css" />
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+  <div class="app">
+    <!-- LOGIN SCREEN -->
+    <section id="loginScreen" class="screen loginScreen">
+      <div class="card">
+        <div class="brand">
+          <div class="dot"></div>
+          <div>
+            <div class="title">Hội chẩn</div>
+            <div class="subtitle">Đăng nhập Google để bắt đầu chat</div>
+          </div>
+        </div>
+
+        <div id="googleBtn" class="googleBtn"></div>
+        <div class="hint">Tên chat sẽ lấy theo tên Google của bạn.</div>
+
+        <div class="tiny">
+          Backend WS: <span class="mono" id="wsLabel"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAT SCREEN -->
+    <section id="chatScreen" class="screen chatScreen hidden">
+      <header class="topbar">
+        <div class="topLeft">
+          <div class="pill">Hội chẩn</div>
+          <div class="me" id="meLabel"></div>
+        </div>
+        <button class="ghostBtn" id="logoutBtn">Đăng xuất</button>
+      </header>
+
+      <main class="messages" id="messages"></main>
+
+      <footer class="composer">
+        <input id="msgInput" class="input" placeholder="Nhập tin nhắn…" autocomplete="off" />
+        <button id="sendBtn" class="sendBtn">Gửi</button>
+      </footer>
+    </section>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
